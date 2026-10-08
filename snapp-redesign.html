@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>اسنپ آرام | Snap Aram</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<style>
+  :root{
+    --green:#00d170;
+    --green-dark:#00a85a;
+    --bg:#0f1115;
+    --surface:#171a21;
+    --surface-2:#1f232c;
+    --line:#262b35;
+    --text:#f5f7fa;
+    --muted:#8b93a3;
+    --radius:22px;
+    --radius-sm:14px;
+    --shadow:0 20px 60px rgba(0,0,0,.45);
+  }
+  [data-theme="light"]{
+    --bg:#f2f4f8;
+    --surface:#ffffff;
+    --surface-2:#eef1f6;
+    --line:#e3e7ef;
+    --text:#0f1115;
+    --muted:#6b7280;
+    --shadow:0 20px 60px rgba(15,17,21,.12);
+  }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:'Vazirmatn',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    overflow:hidden;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    transition:background .3s,color .3s;
+  }
+
+  /* قاب موبایل */
+  .phone{
+    position:relative;
+    width:100%;
+    max-width:420px;
+    height:100vh;
+    max-height:900px;
+    background:var(--bg);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    box-shadow:var(--shadow);
+  }
+  @media(min-width:520px){
+    .phone{border-radius:38px;border:1px solid var(--line);height:92vh;}
+  }
+
+  /* نقشه ساختگی */
+  .map{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(circle at 30% 20%, #1b3a2a 0%, transparent 55%),
+      radial-gradient(circle at 70% 80%, #1a2740 0%, transparent 55%),
+      linear-gradient(180deg,var(--bg),var(--surface));
+    z-index:0;
+  }
+  [data-theme="light"] .map{
+    background:
+      radial-gradient(circle at 30% 20%, #d9f5e5 0%, transparent 55%),
+      radial-gradient(circle at 70% 80%, #dbe7ff 0%, transparent 55%),
+      linear-gradient(180deg,#eef2f7,#e3e9f2);
+  }
+  .map::before{
+    content:"";
+    position:absolute;inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+    background-size:44px 44px;
+  }
+  [data-theme="light"] .map::before{
+    background-image:
+      linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);
+  }
+
+  /* مسیر روی نقشه */
+  .route{
+    position:absolute;
+    top:22%;right:18%;
+    width:60%;height:50%;
+    z-index:1;
+    pointer-events:none;
+  }
+  .route svg{width:100%;height:100%;overflow:visible;}
+  .route path{
+    fill:none;
+    stroke:var(--green);
+    stroke-width:5;
+    stroke-linecap:round;
+    stroke-dasharray:8 12;
+    filter:drop-shadow(0 0 8px rgba(0,209,112,.6));
+    animation:dash 30s linear infinite;
+  }
+  @keyframes dash{to{stroke-dashoffset:-400;}}
+
+  .pin{
+    position:absolute;
+    width:16px;height:16px;border-radius:50%;
+    background:var(--green);
+    border:3px solid var(--surface);
+    box-shadow:0 0 0 6px rgba(0,209,112,.25),0 0 20px rgba(0,209,112,.6);
+    z-index:2;
+  }
+  .pin.start{top:26%;right:22%;}
+  .pin.end{top:68%;right:70%;background:#ff5c5c;box-shadow:0 0 0 6px rgba(255,92,92,.25),0 0 20px rgba(255,92,92,.6);}
+
+  /* هدر شناور */
+  .topbar{
+    position:relative;z-index:5;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 16px 0;
+  }
+  .avatar{
+    width:44px;height:44px;border-radius:50%;
+    background:var(--surface);
+    border:1px solid var(--line);
+    display:grid;place-items:center;
+    font-weight:700;color:var(--green);
+    cursor:pointer;
+    backdrop-filter:blur(12px);
+  }
+  .pill{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:10px 16px;
+    font-size:13px;
+    color:var(--muted);
+    display:flex;align-items:center;gap:8px;
+    backdrop-filter:blur(12px);
+  }
+  .pill .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);}
+  .theme-btn{
+    width:44px;height:44px;border-radius:50%;
+    background:var(--surface);border:1px solid var(--line);
+    color:var(--text);font-size:18px;
+    cursor:pointer;display:grid;place-items:center;
+    backdrop-filter:blur(12px);
+  }
+
+  /* شیت پایین */
+  .sheet{
+    position:relative;z-index:10;
+    margin-top:auto;
+    background:var(--surface);
+    border-radius:28px 28px 0 0;
+    border-top:1px solid var(--line);
+    padding:14px 18px calc(18px + env(safe-area-inset-bottom));
+    box-shadow:0 -20px 60px rgba(0,0,0,.35);
+    transition:transform .3s ease;
+  }
+  [data-theme="light"] .sheet{box-shadow:0 -20px 60px rgba(15,17,21,.08);}
+
+  .handle{
+    width:44px;height:5px;border-radius:99px;
+    background:var(--line);
+    margin:0 auto 14px;
+  }
+
+  .greeting{font-size:14px;color:var(--muted);margin:0 0 14px;}
+  .greeting b{color:var(--text);font-size:16px;display:block;margin-top:2px;}
+
+  /* فیلدهای مبدا/مقصد */
+  .route-inputs{
+    position:relative;
+    background:var(--surface-2);
+    border-radius:var(--radius-sm);
+    padding:6px 6px 6px 6px;
+    margin-bottom:14px;
+  }
+  .route-inputs::before{
+    content:"";
+    position:absolute;
+    right:24px;top:38px;bottom:38px;
+    width:2px;
+    background:repeating-linear-gradient(180deg,var(--muted) 0 4px,transparent 4px 8px);
+    opacity:.5;
+  }
+  .field{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 12px;
+    border-radius:12px;
+    cursor:pointer;
+    transition:background .2s;
+  }
+  .field:hover{background:rgba(255,255,255,.04);}
+  .field + .field{border-top:1px solid var(--line);}
+  .field .ic{
+    width:12px;height:12px;border-radius:50%;
+    flex-shrink:0;
+  }
+  .field .ic.green{background:var(--green);box-shadow:0 0 0 4px rgba(0,209,112,.18);}
+  .field .ic.red{background:#ff5c5c;box-shadow:0 0 0 4px rgba(255,92,92,.18);}
+  .field .txt{flex:1;font-size:14px;}
+  .field .txt small{display:block;color:var(--muted);font-size:11px;margin-bottom:2px;}
+  .field .arrow{color:var(--muted);font-size:12px;}
+
+  /* چیپ سرویس‌ها */
+  .services{
+    display:flex;gap:8px;overflow-x:auto;
+    padding-bottom:6px;margin-bottom:14px;
+    scrollbar-width:none;
+  }
+  .services::-webkit-scrollbar{display:none;}
+  .chip{
+    flex-shrink:0;
+    padding:10px 16px;
+    border-radius:999px;
+    background:var(--surface-2);
+    border:1px solid transparent;
+    color:var(--muted);
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    display:flex;align-items:center;gap:6px;
+    transition:.2s;
+    font-family:inherit;
+  }
+  .chip:hover{color:var(--text);}
+  .chip.active{
+    background:rgba(0,209,112,.12);
+    border-color:var(--green);
+    color:var(--green);
+  }
+  .chip .em{font-size:15px;}
+
+  /* کارت قیمت */
+  .price-card{
+    background:var(--surface-2);
+    border-radius:var(--radius-sm);
+    padding:14px 16px;
+    margin-bottom:14px;
+    display:flex;justify-content:space-between;align-items:center;
+    animation:fadeUp .35s ease;
+  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .price-card .info small{display:block;color:var(--muted);font-size:11px;margin-bottom:3px;}
+  .price-card .info b{font-size:18px;}
+  .price-card .meta{display:flex;gap:14px;margin-top:8px;}
+  .price-card .meta span{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+  .price-card .eta{
+    background:rgba(0,209,112,.12);
+    color:var(--green);
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:12px;
+    font-weight:600;
+    text-align:center;
+    line-height:1.4;
+  }
+  .price-card .eta b{display:block;font-size:16px;}
+
+  /* دکمه اصلی */
+  .cta{
+    width:100%;
+    padding:18px;
+    border:none;
+    border-radius:var(--radius-sm);
+    background:linear-gradient(135deg,var(--green),var(--green-dark));
+    color:#04170d;
+    font-family:inherit;
+    font-size:16px;
+    font-weight:800;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:.2s;
+    box-shadow:0 10px 30px rgba(0,209,112,.25);
+  }
+  .cta:active{transform:scale(.98);}
+  .cta:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
+
+  /* نوار پایین */
+  .bottomnav{
+    display:flex;justify-content:space-around;
+    margin-top:14px;padding-top:12px;
+    border-top:1px solid var(--line);
+  }
+  .nav-item{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    background:none;border:none;color:var(--muted);
+    font-family:inherit;font-size:10px;
+    cursor:pointer;padding:4px 12px;border-radius:12px;
+    transition:.2s;
+  }
+  .nav-item .ico{font-size:18px;line-height:1;}
+  .nav-item.active{color:var(--green);}
+  .nav-item:hover{color:var(--text);}
+
+  /* مودال تایید */
+  .overlay{
+    position:absolute;inset:0;z-index:50;
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(6px);
+    display:flex;align-items:flex-end;
+    opacity:0;pointer-events:none;
+    transition:opacity .3s;
+  }
+  .overlay.show{opacity:1;pointer-events:auto;}
+  .modal{
+    width:100%;
+    background:var(--surface);
+    border-radius:28px 28px 0 0;
+    padding:24px 22px calc(24px + env(safe-area-inset-bottom));
+    transform:translateY(30px);
+    transition:transform .35s cubic-bezier(.2,.9,.3,1);
+  }
+  .overlay.show .modal{transform:none;}
+  .modal h3{margin:0 0 6px;font-size:18px;}
+  .modal p{color:var(--muted);font-size:13px;margin:0 0 18px;line-height:1.7;}
+  .modal .row{
+    display:flex;gap:10px;
+  }
+  .modal .row button{flex:1;}
+  .ghost{
+    padding:16px;border-radius:var(--radius-sm);
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    color:var(--text);font-family:inherit;font-size:14px;font-weight:600;
+    cursor:pointer;
+  }
+  .success-icon{
+    width:64px;height:64px;border-radius:50%;
+    background:rgba(0,209,112,.15);
+    display:grid;place-items:center;
+    font-size:28px;color:var(--green);
+    margin:0 auto 14px;
+    animation:pop .4s ease;
+  }
+  @keyframes pop{from{transform:scale(.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .center{text-align:center;}
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="phone" id="app">
+
+  <!-- نقشه -->
+  <div class="map"></div>
+
+  <!-- مسیر -->
+  <div class="route">
+    <svg viewBox="0 0 200 200" preserveAspectRatio="none">
+      <path d="M30,40 C80,20 140,80 170,150" />
+    </svg>
+  </div>
+  <div class="pin start"></div>
+  <div class="pin end"></div>
+
+  <!-- هدر -->
+  <div class="topbar">
+    <div class="avatar">ع</div>
+    <div class="pill"><span class="dot"></span> راننده‌ها نزدیک شما</div>
+    <button class="theme-btn" id="themeBtn" aria-label="تغییر تم">🌙</button>
+  </div>
+
+  <!-- شیت -->
+  <div class="sheet">
+    <div class="handle"></div>
+
+    <p class="greeting">سلام علی 👋<b>کجا می‌روی؟</b></p>
+
+    <div class="route-inputs">
+      <div class="field" onclick="pick('origin')">
+        <span class="ic green"></span>
+        <div class="txt"><small>مبدأ</small><span id="originTxt">موقعیت فعلی من</span></div>
+        <span class="arrow">›</span>
+      </div>
+      <div class="field" onclick="pick('dest')">
+        <span class="ic red"></span>
+        <div class="txt"><small>مقصد</small><span id="destTxt">انتخاب مقصد…</span></div>
+        <span class="arrow">‹</span>
+      </div>
+    </div>
+
+    <div class="services" id="services">
+      <button class="chip active" data-price="185" data-eta="۴"><span class="em">🚗</span> اقتصادی</button>
+      <button class="chip" data-price="240" data-eta="۶"><span class="em">🚙</span> پلاس</button>
+      <button class="chip" data-price="95"  data-eta="۳"><span class="em">🏍️</span> موتور</button>
+      <button class="chip" data-price="70"  data-eta="۵"><span class="em">📦</span> پیک</button>
+      <button class="chip" data-price="620" data-eta="۱۲"><span class="em">🛣️</span> بین‌شهری</button>
+    </div>
+
+    <div class="price-card">
+      <div class="info">
+        <small>هزینه تقریبی سفر</small>
+        <b><span id="price">۱۸۵,۰۰۰</span> تومان</b>
+        <div class="meta">
+          <span>⏱ ۳۵ دقیقه مسیر</span>
+          <span>📍 ۱۲.۴ کیلومتر</span>
+        </div>
+      </div>
+      <div class="eta">
+        <b id="etaNum">۴</b>
+        دقیقه تا رسیدن
+      </div>
+    </div>
+
+    <button class="cta" id="requestBtn" disabled>
+      تایید و درخواست سفر
+    </button>
+
+    <nav class="bottomnav">
+      <button class="nav-item active"><span class="ico">🚕</span>سفر</button>
+      <button class="nav-item"><span class="ico">📦</span>سفارش‌ها</button>
+      <button class="nav-item"><span class="ico">👛</span>کیف پول</button>
+      <button class="nav-item"><span class="ico">👤</span>حساب</button>
+    </nav>
+  </div>
+
+  <!-- مودال -->
+  <div class="overlay" id="overlay">
+    <div class="modal" id="modalContent"></div>
+  </div>
+
+</div>
+
+<script>
+  /* ---------- تم ---------- */
+  const themeBtn = document.getElementById('themeBtn');
+  themeBtn.addEventListener('click', () => {
+    const cur = document.body.dataset.theme;
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.body.dataset.theme = next;
+    themeBtn.textContent = next === 'dark' ? '🌙' : '☀️';
+  });
+
+  /* ---------- انتخاب سرویس ---------- */
+  const chips = document.querySelectorAll('.chip');
+  const priceEl = document.getElementById('price');
+  const etaEl = document.getElementById('etaNum');
+
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const p = Number(chip.dataset.price) * 1000;
+      priceEl.textContent = p.toLocaleString('fa-IR');
+      etaEl.textContent = chip.dataset.eta;
+    });
+  });
+
+  /* ---------- انتخاب مبدا/مقصد ---------- */
+  let originSet = true;
+  let destSet = false;
+
+  function pick(type){
+    const samples = ['میدان ونک','برج میلاد','فرودگاه امام','پارک لاله','بازار تجریش','ایستگاه مترو صادقیه'];
+    const random = samples[Math.floor(Math.random()*samples.length)];
+
+    if(type === 'origin'){
+      document.getElementById('originTxt').textContent = random;
+    } else {
+      document.getElementById('destTxt').textContent = random;
+      destSet = true;
+      document.getElementById('requestBtn').disabled = false;
+    }
+  }
+
+  /* ---------- دکمه درخواست ---------- */
+  const overlay = document.getElementById('overlay');
+  const modalContent = document.getElementById('modalContent');
+  const requestBtn = document.getElementById('requestBtn');
+
+  requestBtn.addEventListener('click', () => {
+    const service = document.querySelector('.chip.active').textContent.trim();
+    const price = priceEl.textContent;
+    const eta = etaEl.textContent;
+
+    modalContent.innerHTML = `
+      <div class="success-icon">✓</div>
+      <div class="center">
+        <h3>درخواست ثبت شد</h3>
+        <p>در حال پیدا کردن نزدیک‌ترین راننده برای شما…</p>
+      </div>
+      <div class="price-card" style="margin-bottom:18px">
+        <div class="info">
+          <small>سرویس انتخابی</small>
+          <b>${service}</b>
+          <div class="meta">
+            <span>💰 ${price} تومان</span>
+            <span>⏱ ${eta} دقیقه</span>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <button class="ghost" onclick="closeModal()">انصراف</button>
+        <button class="cta" onclick="closeModal()">باشه</button>
+      </div>
+    `;
+    overlay.classList.add('show');
+  });
+
+  function closeModal(){
+    overlay.classList.remove('show');
+  }
+  overlay.addEventListener('click', e => {
+    if(e.target === overlay) closeModal();
+  });
+
+  /* ---------- نوار پایین ---------- */
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
